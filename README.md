@@ -1,4 +1,4 @@
-# blend2sprite
+# spritebake
 
 Convert Blender animations to sprite sheets.
 
