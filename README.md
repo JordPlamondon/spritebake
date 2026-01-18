@@ -14,13 +14,13 @@ Requires [Blender](https://www.blender.org/download/) 4.x installed.
 
 ```bash
 # Basic
-python3 blend2sprite.py model.blend -o sprite.png
+python3 spritebake.py model.blend -o sprite.png
 
 # With transparent background (AI-powered)
-python3 blend2sprite.py model.blend -o sprite.png --remove-bg
+python3 spritebake.py model.blend -o sprite.png --remove-bg
 
 # More options
-python3 blend2sprite.py model.blend -o sprite.png --frames 16 --size 256 --remove-bg
+python3 spritebake.py model.blend -o sprite.png --frames 16 --size 256 --remove-bg
 ```
 
 ## Options
@@ -40,13 +40,13 @@ python3 blend2sprite.py model.blend -o sprite.png --frames 16 --size 256 --remov
 
 ```bash
 # 16-frame sprite sheet at 256px
-python3 blend2sprite.py character.blend -o character.png --frames 16 --size 256
+python3 spritebake.py character.blend -o character.png --frames 16 --size 256
 
 # 4-column grid with transparent background
-python3 blend2sprite.py walk.blend -o walk.png --frames 8 --cols 4 --remove-bg
+python3 spritebake.py walk.blend -o walk.png --frames 8 --cols 4 --remove-bg
 
 # Keep individual frames for inspection
-python3 blend2sprite.py model.blend -o output.png --keep-frames
+python3 spritebake.py model.blend -o output.png --keep-frames
 ```
 
 ## How it works

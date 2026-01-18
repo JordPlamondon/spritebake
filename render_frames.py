@@ -1,5 +1,5 @@
 """
-Blender render script for blend2sprite.
+Blender render script for spritebake.
 Called internally - renders animation frames to PNG files.
 """
 
@@ -84,7 +84,7 @@ def main():
     frame_end = args["end"] if args["end"] is not None else scene.frame_end
     num_frames = args["frames"]
 
-    print("blend2sprite render script")
+    print("spritebake render script")
     print(f"  Output: {args['output']}")
     print(f"  Frame range: {frame_start}-{frame_end}")
     print(f"  Frames: {num_frames}")

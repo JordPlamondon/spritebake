@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-blend2sprite - Convert Blender animations to sprite sheets.
+spritebake - Convert Blender animations to sprite sheets.
 
 Usage:
-    blend2sprite model.blend -o sprite.png
-    blend2sprite model.blend -o sprite.png --frames 16 --remove-bg
+    spritebake model.blend -o sprite.png
+    spritebake model.blend -o sprite.png --frames 16 --remove-bg
 """
 
 import argparse
