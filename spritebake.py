@@ -107,6 +107,41 @@ def is_mostly_transparent(img, threshold=0.80):
     return transparent / total > threshold
 
 
+def needs_background_removal(img):
+    """Check if image needs background removal.
+
+    Returns True if the image has a solid/opaque background.
+    Returns False if the image already has good transparency.
+
+    Strategy: Check ALL four corners AND overall transparency.
+    Only skip if corners are ALL transparent.
+    """
+    arr = np.array(img.convert('RGBA'))
+    alpha = arr[:, :, 3]
+    h, w = alpha.shape
+
+    # Check each corner individually (3x3 areas)
+    cs = 3  # corner sample size
+    corner_regions = [
+        alpha[:cs, :cs],           # top-left
+        alpha[:cs, -cs:],          # top-right
+        alpha[-cs:, :cs],          # bottom-left
+        alpha[-cs:, -cs:]          # bottom-right
+    ]
+
+    # ALL four corners must be fully transparent to skip
+    for corner in corner_regions:
+        if np.mean(corner) > 10:  # If any corner has opacity > 10
+            return True  # Needs background removal
+
+    # Double-check: overall image should be >40% transparent
+    total_transparent = np.sum(alpha < 10) / (h * w)
+    if total_transparent < 0.4:
+        return True  # Not enough transparency, needs removal
+
+    return False  # All corners transparent + good overall transparency
+
+
 def stitch_spritesheet(frames_dir, output_path, cols=None, remove_bg=False):
     """Combine frames into a sprite sheet."""
     frames_dir = Path(frames_dir)
@@ -121,33 +156,46 @@ def stitch_spritesheet(frames_dir, output_path, cols=None, remove_bg=False):
     if remove_bg:
         try:
             from rembg import remove, new_session
-            print("Removing backgrounds...")
 
-            session = new_session()
-
-            def process_frame(args):
-                idx, img = args
+            # Auto-detect which frames need background removal
+            frames_needing_removal = []
+            frames_empty = []
+            for i, img in enumerate(images):
                 if is_empty_frame(img):
-                    return idx, Image.new('RGBA', img.size, (0, 0, 0, 0))
-                elif is_mostly_transparent(img):
-                    return idx, img
-                else:
+                    frames_empty.append(i)
+                elif needs_background_removal(img):
+                    frames_needing_removal.append(i)
+
+            # Replace empty frames with transparent
+            for i in frames_empty:
+                images[i] = Image.new('RGBA', images[i].size, (0, 0, 0, 0))
+
+            if frames_empty:
+                print(f"  {len(frames_empty)} empty frames replaced with transparent")
+
+            if frames_needing_removal:
+                print(f"Removing backgrounds ({len(frames_needing_removal)}/{len(images)} frames need processing)...")
+                session = new_session()
+
+                def process_frame(args):
+                    idx, img = args
                     return idx, remove(img, session=session)
 
-            num_workers = min(len(images), os.cpu_count() or 4)
-            processed = [None] * len(images)
+                num_workers = min(len(frames_needing_removal), os.cpu_count() or 4)
 
-            with ThreadPoolExecutor(max_workers=num_workers) as executor:
-                futures = {executor.submit(process_frame, (i, img)): i for i, img in enumerate(images)}
-                done = 0
-                for future in as_completed(futures):
-                    idx, result = future.result()
-                    processed[idx] = result
-                    done += 1
-                    print(f"\r  Processing: {done}/{len(images)}", end="", flush=True)
-                print()
+                with ThreadPoolExecutor(max_workers=num_workers) as executor:
+                    futures = {executor.submit(process_frame, (i, images[i])): i
+                               for i in frames_needing_removal}
+                    done = 0
+                    for future in as_completed(futures):
+                        idx, result = future.result()
+                        images[idx] = result
+                        done += 1
+                        print(f"\r  Processing: {done}/{len(frames_needing_removal)}", end="", flush=True)
+                    print()
+            else:
+                print("Backgrounds already transparent, skipping rembg")
 
-            images = processed
         except ImportError:
             print("Warning: rembg not installed. pip install 'rembg[cpu]'")
 
