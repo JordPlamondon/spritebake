@@ -128,7 +128,7 @@ def get_args():
     return args
 
 
-def setup_render(size, neutralize_bg=True):
+def setup_render(size, neutralize_bg=True, render_scale=2):
     """Configure Blender render settings for sprite output."""
     scene = bpy.context.scene
 
@@ -138,12 +138,57 @@ def setup_render(size, neutralize_bg=True):
     except TypeError:
         scene.render.engine = 'BLENDER_EEVEE'
 
-    scene.render.resolution_x = size
-    scene.render.resolution_y = size
+    # Render at higher resolution, downscale later for cleaner sprites
+    render_size = size * render_scale
+    scene.render.resolution_x = render_size
+    scene.render.resolution_y = render_size
+    print(f"[RENDER] Rendering at {render_size}x{render_size}, will downscale to {size}x{size}")
+
     scene.render.resolution_percentage = 100
     scene.render.film_transparent = True
     scene.render.image_settings.file_format = 'PNG'
     scene.render.image_settings.color_mode = 'RGBA'
+
+    # EEVEE performance optimizations (with fallbacks for different Blender versions)
+    eevee = scene.eevee
+
+    # Settings that exist in most versions
+    try:
+        eevee.use_gtao = False              # Ambient Occlusion
+    except AttributeError:
+        pass
+    try:
+        eevee.use_bloom = False             # Bloom/glow (removed in 4.x)
+    except AttributeError:
+        pass
+    try:
+        eevee.use_ssr = False               # Screen Space Reflections (removed in 4.x)
+    except AttributeError:
+        pass
+    try:
+        eevee.use_motion_blur = False       # Motion blur (moved in 4.x)
+    except AttributeError:
+        pass
+    try:
+        eevee.use_volumetric_lights = False # Volumetrics (removed in 4.x)
+    except AttributeError:
+        pass
+    try:
+        eevee.use_volumetric_shadows = False
+    except AttributeError:
+        pass
+    try:
+        eevee.shadow_cube_size = '256'      # Reduced from 512 (removed in 4.x)
+    except AttributeError:
+        pass
+    try:
+        eevee.shadow_cascade_size = '256'   # (removed in 4.x)
+    except AttributeError:
+        pass
+    try:
+        eevee.taa_render_samples = 8        # Reduced from 64
+    except AttributeError:
+        pass
 
     if scene.world:
         scene.world.use_nodes = False

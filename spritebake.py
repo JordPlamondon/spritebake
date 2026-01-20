@@ -142,7 +142,7 @@ def needs_background_removal(img):
     return False  # All corners transparent + good overall transparency
 
 
-def stitch_spritesheet(frames_dir, output_path, cols=None, remove_bg=False):
+def stitch_spritesheet(frames_dir, output_path, cols=None, remove_bg=False, target_size=None):
     """Combine frames into a sprite sheet."""
     frames_dir = Path(frames_dir)
     frame_files = sorted(frames_dir.glob("frame_*.png"))
@@ -152,6 +152,11 @@ def stitch_spritesheet(frames_dir, output_path, cols=None, remove_bg=False):
         return False
 
     images = [Image.open(f) for f in frame_files]
+
+    # Downscale if target_size specified and frames are larger
+    if target_size and images[0].width > target_size:
+        print(f"  Downscaling {len(images)} frames from {images[0].width}x{images[0].height} to {target_size}x{target_size}")
+        images = [img.resize((target_size, target_size), Image.LANCZOS) for img in images]
 
     if remove_bg:
         try:
@@ -259,7 +264,7 @@ def main():
                             neutralize_bg=not args.no_bg_neutralize):
             sys.exit(1)
 
-        if not stitch_spritesheet(frames_dir, args.output, args.cols, args.remove_bg):
+        if not stitch_spritesheet(frames_dir, args.output, args.cols, args.remove_bg, target_size=args.size):
             sys.exit(1)
 
         if args.keep_frames:
