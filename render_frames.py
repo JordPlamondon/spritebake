@@ -213,10 +213,10 @@ def main():
     max_size = max(sizes[0], sizes[2])
 
     # Create camera if none exists
-    auto_camera = ensure_camera(center, sizes)
+    ensure_camera(center, sizes)
 
     # Create light if none exists
-    auto_light = ensure_light(center, max_size)
+    ensure_light(center, max_size)
 
     # Try to find and relink missing textures
     blend_dir = os.path.dirname(bpy.data.filepath)
